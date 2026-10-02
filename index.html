@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinanceFlow — Personal Budget Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">💸</span>
+        <span class="logo-text">FinanceFlow</span>
+      </div>
+      <nav class="header-actions">
+        <button class="btn-tab active" data-view="dashboard" aria-label="Dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </button>
+        <button class="btn-tab" data-view="summary" aria-label="Monthly Summary">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Monthly
+        </button>
+        <button class="btn-tab" data-view="categories" aria-label="Categories">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          Categories
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode" title="Toggle theme">
+          <span class="theme-icon-light">☀️</span>
+          <span class="theme-icon-dark">🌙</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- ─── ALERT BANNER ─── -->
+    <div class="alert-banner" id="alertBanner" role="alert" aria-live="polite" hidden>
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-message" id="alertMessage"></span>
+      <button class="alert-close" id="alertClose" aria-label="Dismiss alert">✕</button>
+    </div>
+
+    <!-- ══════════════════════════════
+         VIEW: DASHBOARD
+    ══════════════════════════════ -->
+    <section class="view active" id="view-dashboard">
+
+      <!-- Summary Cards -->
+      <div class="cards-row">
+        <div class="card card--balance">
+          <div class="card-label">Net Balance</div>
+          <div class="card-amount" id="totalBalance">$0.00</div>
+          <div class="card-sub" id="balanceTrend"></div>
+        </div>
+        <div class="card card--income">
+          <div class="card-label">Total Income</div>
+          <div class="card-amount" id="totalIncome">$0.00</div>
+          <div class="card-sub" id="incomeCount">0 transactions</div>
+        </div>
+        <div class="card card--expense">
+          <div class="card-label">Total Expenses</div>
+          <div class="card-amount" id="totalExpense">$0.00</div>
+          <div class="card-sub" id="expenseCount">0 transactions</div>
+        </div>
+        <div class="card card--savings">
+          <div class="card-label">Savings Rate</div>
+          <div class="card-amount" id="savingsRate">0%</div>
+          <div class="card-sub">of income saved</div>
+        </div>
+      </div>
+
+      <!-- Pie Chart — Spending by Category -->
+      <div class="panel pie-chart-panel" id="pieChartPanel">
+        <div class="pie-chart-header">
+          <h2 class="panel-title" style="margin-bottom:0;">Spending by Category</h2>
+          <span class="pie-chart-sub" id="pieChartSub">All-time expenses</span>
+        </div>
+        <div class="pie-chart-body">
+          <div class="pie-canvas-wrap">
+            <canvas id="spendingPieChart" aria-label="Pie chart showing spending distribution by category" role="img"></canvas>
+            <div class="pie-empty" id="pieEmpty">
+              <span class="pie-empty-icon">🥧</span>
+              <span>Add expense transactions<br>to see your breakdown.</span>
+            </div>
+          </div>
+          <ul class="pie-legend" id="pieLegend" role="list"></ul>
+        </div>
+      </div>
+
+      <!-- Spending Limit Banner -->
+      <div class="limit-bar-wrap" id="limitBarWrap">
+        <div class="limit-bar-header">
+          <span>Spending Limit</span>
+          <span id="limitBarLabel"></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="limitProgress"></div>
+        </div>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="dashboard-grid">
+
+        <!-- LEFT: Add Transaction Form -->
+        <aside class="panel panel--form">
+          <h2 class="panel-title">Add Transaction</h2>
+          <form id="transactionForm" novalidate>
+            <div class="form-group">
+              <label for="txDescription">Description</label>
+              <input type="text" id="txDescription" placeholder="e.g. Grocery run" maxlength="60" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txAmount">Amount ($)</label>
+                <input type="number" id="txAmount" placeholder="0.00" min="0.01" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label for="txType">Type</label>
+                <select id="txType">
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txCategory">Category</label>
+                <select id="txCategory"></select>
+              </div>
+              <div class="form-group">
+                <label for="txDate">Date</label>
+                <input type="date" id="txDate" required />
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Transaction
+            </button>
+          </form>
+
+          <!-- Spending Limit Setter -->
+          <div class="limit-section">
+            <h3 class="section-sub-title">Spending Limit Alert</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="spendingLimit">Monthly limit ($)</label>
+                <input type="number" id="spendingLimit" placeholder="e.g. 2000" min="1" step="1" />
+              </div>
+              <button class="btn-secondary" id="setLimitBtn">Set</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- RIGHT: Transaction List -->
+        <section class="panel panel--list">
+          <div class="list-header">
+            <h2 class="panel-title">Transactions</h2>
+            <div class="list-controls">
+              <select id="filterCategory" aria-label="Filter by category">
+                <option value="all">All Categories</option>
+              </select>
+              <select id="sortSelect" aria-label="Sort transactions">
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="amount-desc">Highest Amount</option>
+                <option value="amount-asc">Lowest Amount</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="search-wrap">
+            <input type="search" id="searchInput" placeholder="🔍  Search transactions…" aria-label="Search transactions" />
+          </div>
+
+          <ul class="tx-list" id="txList" role="list">
+            <!-- transactions injected by JS -->
+          </ul>
+
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📭</div>
+            <p>No transactions yet.<br>Add one to get started!</p>
+          </div>
+        </section>
+
+      </div><!-- /.dashboard-grid -->
+    </section><!-- /#view-dashboard -->
+
+
+    <!-- ══════════════════════════════
+         VIEW: MONTHLY SUMMARY
+    ══════════════════════════════ -->
+    <section class="view" id="view-summary">
+      <div class="view-header">
+        <h2>Monthly Summary</h2>
+        <div class="month-nav">
+          <button class="btn-icon" id="prevMonth" aria-label="Previous month">&#8249;</button>
+          <span class="month-label" id="monthLabel"></span>
+          <button class="btn-icon" id="nextMonth" aria-label="Next month">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card card--income">
+          <div class="card-label">Income</div>
+          <div class="card-amount" id="summaryIncome">$0.00</div>
+        </div>
+        <div class="card card--expense">
+          <div class="card-label">Expenses</div>
+          <div class="card-amount" id="summaryExpense">$0.00</div>
+        </div>
+        <div class="card card--balance">
+          <div class="card-label">Net</div>
+          <div class="card-amount" id="summaryNet">$0.00</div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown Chart (CSS bar chart) -->
+      <div class="panel">
+        <h3 class="panel-title">Expense Breakdown by Category</h3>
+        <div class="chart-wrap" id="categoryChart">
+          <div class="chart-empty">No expense data for this month.</div>
+        </div>
+      </div>
+
+      <!-- Monthly transaction list -->
+      <div class="panel">
+        <h3 class="panel-title">Transactions This Month</h3>
+        <ul class="tx-list" id="summaryTxList" role="list"></ul>
+        <div class="empty-state" id="summaryEmpty">
+          <div class="empty-icon">📅</div>
+          <p>No transactions this month.</p>
+        </div>
+      </div>
+    </section><!-- /#view-summary -->
+
+
+    <!-- ══════════════════════════════
+         VIEW: CATEGORIES
+    ══════════════════════════════ -->
+    <section class="view" id="view-categories">
+      <div class="view-header">
+        <h2>Manage Categories</h2>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Add Category -->
+        <aside class="panel panel--form">
+          <h3 class="panel-title">Add Custom Category</h3>
+          <form id="categoryForm" novalidate>
+            <div class="form-group">
+              <label for="catName">Category Name</label>
+              <input type="text" id="catName" placeholder="e.g. Gym, Hobbies…" maxlength="30" required />
+            </div>
+            <div class="form-group">
+              <label for="catEmoji">Emoji Icon</label>
+              <input type="text" id="catEmoji" placeholder="e.g. 🏋️" maxlength="4" />
+            </div>
+            <div class="form-group">
+              <label for="catColor">Accent Color</label>
+              <input type="color" id="catColor" value="#6366f1" />
+            </div>
+            <div class="form-group">
+              <label for="catType">Applies To</label>
+              <select id="catType">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Category
+            </button>
+          </form>
+        </aside>
+
+        <!-- Category List -->
+        <section class="panel">
+          <h3 class="panel-title">All Categories</h3>
+          <ul class="cat-list" id="catList" role="list"></ul>
+        </section>
+      </div>
+    </section><!-- /#view-categories -->
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════ -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Chart.js v4 (pinned minor, loaded from CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
